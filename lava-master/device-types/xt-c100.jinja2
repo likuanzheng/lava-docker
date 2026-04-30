@@ -2,6 +2,7 @@
 {# QSPI: BOOT.BIN@0x00000000 bootenv@0x02000000 image.ub@0x02040000 rootfs@0x04040000 #}
 {% extends 'base-uboot.jinja2' %}
 {% set bootloader_prompt = bootloader_prompt|default('ZynqMP>') %}
+{% set interrupt_char = ' ' %}
 {% set bootm_kernel_addr = '0x10000000' %}
 {% set bootm_ramdisk_addr = '0x18000000' %}
 {% set bootm_dtb_addr = '0x1c000000' %}

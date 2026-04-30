@@ -14,8 +14,6 @@ actions:
 - boot:
     method: u-boot
     commands: []
-    prompts:
-      - 'ZynqMP>'
     timeout:
       minutes: 2
 
@@ -26,54 +24,98 @@ actions:
     - name: flash-update
       prompts: ['ZynqMP>']
       script:
-      - command: "tftpboot 0x10000000 tftp/image.ub"
+      - command: null
+        name: wait-prompt
+
+      # 下载 kernel，等 Bytes transferred 确认完成
+      - command: "setenv ipaddr 192.168.32.139; setenv serverip 192.168.32.9; tftpboot 0x10000000 tftp/xt-c100/image.ub"
         name: tftp-kernel
+        wait_for_prompt: false
         successes:
         - message: "Bytes transferred"
         failures:
         - message: "TFTP error"
-          error_type: Infrastructure
-      - command: "sf probe"
-        name: sf-probe
+          exception: JobError
+          error: "Failed to download image.ub"
+        - message: "File not found"
+          exception: JobError
+          error: "image.ub not found on TFTP server"
+
+      # 等 tftpboot 结束后的 ZynqMP>，同时保存 filesize
+      - command: null
+        name: wait-after-tftp-kernel
+
+      # 保存 kernel size，擦除整个 kernel 分区(32MB)，写入实际大小
+      - command: "setenv kernel_size ${filesize}; sf probe && sf erase 0x2040000 0x2000000 && sf write 0x10000000 0x2040000 ${kernel_size}"
+        name: flash-kernel
         successes:
-        - message: "SF: Detected"
+        - message: "Written: OK"
         failures:
         - message: "SF: Unrecognized"
-          error_type: Infrastructure
-      - command: "sf erase 0x2040000 0x2000000"
-        name: erase-kernel
-        successes:
-        - message: "Erased: OK"
-        failures:
+          exception: JobError
+          error: "SPI flash not detected"
+        - message: "No SPI flash selected"
+          exception: JobError
+          error: "sf probe failed"
         - message: "ERROR"
-          error_type: Infrastructure
-      - command: "sf write 0x10000000 0x2040000 ${filesize}"
-        name: write-kernel
-        successes:
-        - message: "Written: OK"
-        failures:
-        - message: "ERROR"
-          error_type: Infrastructure
-      - command: "tftpboot 0x10000000 tftp/rootfs_2.jffs2"
+          exception: JobError
+          error: "Failed to flash kernel"
+
+      # 下载 rootfs，等 Bytes transferred 确认完成
+      - command: "tftpboot 0x10000000 tftp/xt-c100/rootfs_2.jffs2"
         name: tftp-rootfs
+        wait_for_prompt: false
         successes:
         - message: "Bytes transferred"
         failures:
         - message: "TFTP error"
-          error_type: Infrastructure
-      - command: "sf erase 0x4040000 ${filesize}"
-        name: erase-rootfs
-        successes:
-        - message: "Erased: OK"
-        failures:
-        - message: "ERROR"
-          error_type: Infrastructure
-      - command: "sf write 0x10000000 0x4040000 ${filesize}"
-        name: write-rootfs
+          exception: JobError
+          error: "Failed to download rootfs_2.jffs2"
+        - message: "File not found"
+          exception: JobError
+          error: "rootfs_2.jffs2 not found on TFTP server"
+
+      # 等 tftpboot 结束后的 ZynqMP>，擦除按文件大小对齐，写入实际大小
+      - command: null
+        name: wait-after-tftp-rootfs
+
+      # 擦除按 filesize 对齐到 erase block(128KB)，写入实际大小
+      - command: "setenv rootfs_size ${filesize}; sf erase 0x4040000 ${rootfs_size} && sf write 0x10000000 0x4040000 ${rootfs_size}"
+        name: flash-rootfs
         successes:
         - message: "Written: OK"
         failures:
+        - message: "No SPI flash selected"
+          exception: JobError
+          error: "sf probe not done"
         - message: "ERROR"
-          error_type: Infrastructure
+          exception: JobError
+          error: "Failed to flash rootfs"
+
       - command: "reset"
         name: reset
+        wait_for_prompt: false
+        successes:
+        - message: "Starting kernel"
+        failures:
+        - message: "Wrong Image Format"
+          exception: JobError
+          error: "Kernel image corrupted"
+        - message: "can't get kernel image"
+          exception: JobError
+          error: "Kernel boot failed"
+
+    - name: linux-verify
+      prompts: ['root@ACH-linux']
+      script:
+      - command: null
+        name: wait-login
+
+      - command: "uname -a"
+        name: uname
+        successes:
+        - message: "Linux"
+        failures:
+        - message: "not found"
+          exception: JobError
+          error: "uname command not found"
