@@ -1,0 +1,79 @@
+device_type: xt-c100
+job_name: xt-c100-001 flash kernel and rootfs
+
+timeouts:
+  job:
+    minutes: 30
+  action:
+    minutes: 20
+
+priority: medium
+visibility: public
+
+actions:
+- boot:
+    method: u-boot
+    commands: []
+    prompts:
+      - 'ZynqMP>'
+    timeout:
+      minutes: 2
+
+- test:
+    timeout:
+      minutes: 25
+    interactive:
+    - name: flash-update
+      prompts: ['ZynqMP>']
+      script:
+      - command: "tftpboot 0x10000000 tftp/image.ub"
+        name: tftp-kernel
+        successes:
+        - message: "Bytes transferred"
+        failures:
+        - message: "TFTP error"
+          error_type: Infrastructure
+      - command: "sf probe"
+        name: sf-probe
+        successes:
+        - message: "SF: Detected"
+        failures:
+        - message: "SF: Unrecognized"
+          error_type: Infrastructure
+      - command: "sf erase 0x2040000 0x2000000"
+        name: erase-kernel
+        successes:
+        - message: "Erased: OK"
+        failures:
+        - message: "ERROR"
+          error_type: Infrastructure
+      - command: "sf write 0x10000000 0x2040000 ${filesize}"
+        name: write-kernel
+        successes:
+        - message: "Written: OK"
+        failures:
+        - message: "ERROR"
+          error_type: Infrastructure
+      - command: "tftpboot 0x10000000 tftp/rootfs_2.jffs2"
+        name: tftp-rootfs
+        successes:
+        - message: "Bytes transferred"
+        failures:
+        - message: "TFTP error"
+          error_type: Infrastructure
+      - command: "sf erase 0x4040000 ${filesize}"
+        name: erase-rootfs
+        successes:
+        - message: "Erased: OK"
+        failures:
+        - message: "ERROR"
+          error_type: Infrastructure
+      - command: "sf write 0x10000000 0x4040000 ${filesize}"
+        name: write-rootfs
+        successes:
+        - message: "Written: OK"
+        failures:
+        - message: "ERROR"
+          error_type: Infrastructure
+      - command: "reset"
+        name: reset

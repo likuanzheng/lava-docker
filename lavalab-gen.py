@@ -25,9 +25,9 @@ template_device_connection_command = string.Template("""#
 {% set connection_command = '${connection_command}' %}
 """)
 template_device_pdu_generic = string.Template("""
-{% set hard_reset_command = '${hard_reset_command}' %}
-{% set power_off_command = '${power_off_command}' %}
-{% set power_on_command = '${power_on_command}' %}
+{% set hard_reset_command = "${hard_reset_command}" %}
+{% set power_off_command = "${power_off_command}" %}
+{% set power_on_command = "${power_on_command}" %}
 """)
 
 template_device_ser2net = string.Template("""
@@ -113,6 +113,7 @@ def main():
         keywords_master = [
             "allowed_hosts",
             "build_args",
+            "custom_volumes",
             "event_notifications",
             "groups", "gunicorn_workers",
             "healthcheck_url", "host", "http_fqdn",
@@ -210,6 +211,9 @@ def main():
         if "gunicorn_workers" in worker:
             dockcomp["services"][name]["environment"] = {}
             dockcomp["services"][name]["environment"]["GUNICORN_WORKERS"] = worker["gunicorn_workers"]
+        if "custom_volumes" in master:
+            for cvolume in master["custom_volumes"]:
+                dockcomp["services"][name]["volumes"].append(cvolume)
 
         with open(dockcomposeymlpath, 'w') as f:
             yaml.dump(dockcomp, f)
@@ -556,7 +560,7 @@ def main():
                 volume_name = cvolume.split(':')[0]
                 if "volumes" not in dockcomp:
                     dockcomp["volumes"] = {}
-                if cvolume[0] != '/':
+                if cvolume[0] != '/' and cvolume[0] != '.':
                     dockcomp["volumes"][volume_name] = {}
         if not "remote_proto" in worker:
             remote_proto = "http"
@@ -726,9 +730,9 @@ def main():
         devicetype = board["type"]
         device_line = template_device.substitute(devicetype=devicetype)
         if "pdu_generic" in board:
-            hard_reset_command = board["pdu_generic"]["hard_reset_command"]
-            power_off_command = board["pdu_generic"]["power_off_command"]
-            power_on_command = board["pdu_generic"]["power_on_command"]
+            hard_reset_command = board["pdu_generic"]["hard_reset_command"].replace('"', '\\"')
+            power_off_command = board["pdu_generic"]["power_off_command"].replace('"', '\\"')
+            power_on_command = board["pdu_generic"]["power_on_command"].replace('"', '\\"')
             device_line += template_device_pdu_generic.substitute(hard_reset_command=hard_reset_command, power_off_command=power_off_command, power_on_command=power_on_command)
         use_kvm = False
         if "kvm" in board:

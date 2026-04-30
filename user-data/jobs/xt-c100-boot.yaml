@@ -1,0 +1,31 @@
+device_type: xt-c100
+job_name: xt-c100-001 boot test
+
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+
+priority: medium
+visibility: public
+
+actions:
+- boot:
+    method: minimal
+    prompts:
+      - 'root@'
+    timeout:
+      minutes: 5
+
+- test:
+    timeout:
+      minutes: 2
+    interactive:
+    - name: boot-check
+      prompts: ['root@']
+      script:
+      - command: uname -a
+        name: uname
+      - command: cat /proc/version
+        name: proc-version
