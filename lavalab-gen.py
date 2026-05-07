@@ -26,8 +26,7 @@ template_device_connection_command = string.Template("""#
 """)
 template_device_pdu_generic = string.Template("""
 {% set hard_reset_command = "${hard_reset_command}" %}
-{% set power_off_command = "${power_off_command}" %}
-{% set power_on_command = "${power_on_command}" %}
+${power_off_line}{% set power_on_command = "${power_on_command}" %}
 """)
 
 template_device_ser2net = string.Template("""
@@ -731,9 +730,13 @@ def main():
         device_line = template_device.substitute(devicetype=devicetype)
         if "pdu_generic" in board:
             hard_reset_command = board["pdu_generic"]["hard_reset_command"].replace('"', '\\"')
-            power_off_command = board["pdu_generic"]["power_off_command"].replace('"', '\\"')
             power_on_command = board["pdu_generic"]["power_on_command"].replace('"', '\\"')
-            device_line += template_device_pdu_generic.substitute(hard_reset_command=hard_reset_command, power_off_command=power_off_command, power_on_command=power_on_command)
+            if "power_off_command" in board["pdu_generic"]:
+                power_off_cmd = board["pdu_generic"]["power_off_command"].replace('"', '\\"')
+                power_off_line = '{%% set power_off_command = "%s" %%}\n' % power_off_cmd
+            else:
+                power_off_line = ""
+            device_line += template_device_pdu_generic.substitute(hard_reset_command=hard_reset_command, power_off_line=power_off_line, power_on_command=power_on_command)
         use_kvm = False
         if "kvm" in board:
             use_kvm = board["kvm"]

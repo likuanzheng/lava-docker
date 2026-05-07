@@ -34,8 +34,7 @@ boards:
   - name: xt-c100-001
     type: xt-c100
     slave: lab-slave-0
-    connection_command: telnet 192.168.32.121 12000
+    connection_command: telnet 192.168.32.9 3333
     pdu_generic:
       power_on_command: mosquitto_pub -h 192.168.32.9 -u ywyh -P 'ywyh@204' -t b0a604429004-set -m '{"key":1,"messageId":"","type":"event"}'
-      power_off_command: mosquitto_pub -h 192.168.32.9 -u ywyh -P 'ywyh@204' -t b0a604429004-set -m '{"key":0,"messageId":"","type":"event"}'
       hard_reset_command: "bash /root/jobs/mqtt-reset.sh"

@@ -1,5 +1,8 @@
 FROM lavasoftware/lava-dispatcher:2026.01
 
+RUN find /etc/apt -name "*.list" -o -name "*.sources" | xargs sed -i \
+    -e 's|deb\.debian\.org|mirrors.tuna.tsinghua.edu.cn|g' \
+    -e 's|security\.debian\.org|mirrors.tuna.tsinghua.edu.cn|g' 2>/dev/null || true
 RUN if [ -e /etc/apt/sources.list.d/debian.sources ] ;then sed -i 's,.*bullseye-backports,#,' /etc/apt/sources.list.d/debian.sources ; fi
 RUN if [ -e /etc/apt/sources.list.d/backports.list ] ;then sed -i 's,.*bullseye-backports,#,' /etc/apt/sources.list.d/backports.list ; fi
 

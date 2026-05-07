@@ -12,5 +12,7 @@ if ls udev/*lavaworker-udev*rules 2>/dev/null; then
 	$BEROOT udevadm trigger || exit $?
 fi
 
+chmod 777 ../../user-data/tftp/xt-c100-backup
+
 docker compose build || exit 1
 docker compose up -d || exit 1

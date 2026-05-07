@@ -1,5 +1,8 @@
 FROM lavasoftware/lava-server:2026.01
 
+RUN find /etc/apt -name "*.list" -o -name "*.sources" | xargs sed -i \
+    -e 's|deb\.debian\.org|mirrors.tuna.tsinghua.edu.cn|g' \
+    -e 's|security\.debian\.org|mirrors.tuna.tsinghua.edu.cn|g' 2>/dev/null || true
 RUN if [ -e /etc/apt/sources.list.d/debian.sources ] ;then sed -i 's,.*bullseye-backports,#,' /etc/apt/sources.list.d/debian.sources ; fi
 RUN if [ -e /etc/apt/sources.list.d/backports.list ] ;then sed -i 's,.*bullseye-backports,#,' /etc/apt/sources.list.d/backports.list ; fi
 RUN apt-get update && apt-get -y install sudo git
@@ -8,8 +11,8 @@ COPY backup /root/backup/
 
 COPY default/* /etc/default/
 
-RUN git clone https://github.com/BayLibre/lava-healthchecks.git
-RUN cp lava-healthchecks/health-checks/* /etc/lava-server/dispatcher-config/health-checks/
+RUN git clone https://github.com/BayLibre/lava-healthchecks.git || true
+RUN if [ -d lava-healthchecks/health-checks ]; then cp lava-healthchecks/health-checks/* /etc/lava-server/dispatcher-config/health-checks/; fi
 COPY health-checks/* /etc/lava-server/dispatcher-config/health-checks/
 RUN if [ -e /etc/lava-server/dispatcher-config/health-checks/healthcheck_url ];then sed -i "s,http.*blob/master,$(cat /etc/lava-server/dispatcher-config/health-checks/healthcheck_url)," /etc/lava-server/dispatcher-config/health-checks/* && sed -i 's,?.*$,,' /etc/lava-server/dispatcher-config/health-checks/* ;fi
 RUN chown -R lavaserver:lavaserver /etc/lava-server/dispatcher-config/health-checks/

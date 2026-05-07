@@ -1,0 +1,95 @@
+device_type: xt-c100
+job_name: xt-c100-001 backup kernel and rootfs to TFTP
+
+# image.ub 分区: offset 0x2040000, size 0x2000000 (32MB)
+# rootfs 分区:   offset 0x4040000, size 0x1BFC0000 (0x20000000 - 0x4040000)
+
+timeouts:
+  job:
+    minutes: 120
+  action:
+    minutes: 115
+
+priority: medium
+visibility: public
+
+actions:
+- boot:
+    method: u-boot
+    commands: []
+    timeout:
+      minutes: 2
+
+- test:
+    timeout:
+      minutes: 115
+    interactive:
+    - name: backup
+      prompts: ['ZynqMP>']
+      script:
+      - command: null
+        name: wait-prompt
+
+      - command: "setenv ipaddr 192.168.32.139; setenv serverip 192.168.32.9; sf probe"
+        name: setup
+        successes:
+        - message: "SF: Detected"
+        failures:
+        - message: "SF: Unrecognized"
+          exception: JobError
+          error: "SPI flash not detected"
+        - message: "No SPI flash selected"
+          exception: JobError
+          error: "sf probe failed"
+
+      - command: "sf read 0x10000000 0x2040000 0x2000000"
+        name: read-kernel
+        failures:
+        - message: "Read: ERROR"
+          exception: JobError
+          error: "Failed to read kernel partition from flash"
+
+      - command: "tftpput 0x10000000 0x2000000 tftp/xt-c100-backup/image.ub"
+        name: upload-kernel
+        wait_for_prompt: false
+        successes:
+        - message: "Bytes transferred"
+        failures:
+        - message: "TFTP error"
+          exception: JobError
+          error: "Failed to upload kernel via TFTP PUT"
+        - message: "Permission denied"
+          exception: JobError
+          error: "TFTP server write denied"
+        - message: "Access violation"
+          exception: JobError
+          error: "TFTP server write access violation"
+
+      - command: null
+        name: wait-after-upload-kernel
+
+      - command: "sf read 0x10000000 0x4040000 0x1FBC0000"
+        name: read-rootfs
+        failures:
+        - message: "Read: ERROR"
+          exception: JobError
+          error: "Failed to read rootfs partition from flash"
+
+      - command: "tftpput 0x10000000 0x1FBC0000 tftp/xt-c100-backup/rootfs.jffs2"
+        name: upload-rootfs
+        wait_for_prompt: false
+        successes:
+        - message: "Bytes transferred"
+        failures:
+        - message: "TFTP error"
+          exception: JobError
+          error: "Failed to upload rootfs via TFTP PUT"
+        - message: "Permission denied"
+          exception: JobError
+          error: "TFTP server write denied"
+        - message: "Access violation"
+          exception: JobError
+          error: "TFTP server write access violation"
+
+      - command: null
+        name: wait-after-upload-rootfs

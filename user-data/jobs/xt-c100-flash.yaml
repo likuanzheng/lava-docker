@@ -62,7 +62,7 @@ actions:
           error: "Failed to flash kernel"
 
       # 下载 rootfs，等 Bytes transferred 确认完成
-      - command: "tftpboot 0x10000000 tftp/xt-c100/rootfs_2.jffs2"
+      - command: "tftpboot 0x10000000 tftp/xt-c100/rootfs.jffs2"
         name: tftp-rootfs
         wait_for_prompt: false
         successes:
@@ -70,17 +70,17 @@ actions:
         failures:
         - message: "TFTP error"
           exception: JobError
-          error: "Failed to download rootfs_2.jffs2"
+          error: "Failed to download rootfs.jffs2"
         - message: "File not found"
           exception: JobError
-          error: "rootfs_2.jffs2 not found on TFTP server"
+          error: "rootfs.jffs2 not found on TFTP server"
 
-      # 等 tftpboot 结束后的 ZynqMP>，擦除按文件大小对齐，写入实际大小
+      # 等 tftpboot 结束后的 ZynqMP>
       - command: null
         name: wait-after-tftp-rootfs
 
-      # 擦除按 filesize 对齐到 erase block(128KB)，写入实际大小
-      - command: "setenv rootfs_size ${filesize}; sf erase 0x4040000 ${rootfs_size} && sf write 0x10000000 0x4040000 ${rootfs_size}"
+      # 擦除整个 rootfs 分区(0x1BFC0000)，避免残留旧数据导致 jffs2 CRC 错误，写入实际大小
+      - command: "setenv rootfs_size ${filesize}; sf erase 0x4040000 0x1BFC0000 && sf write 0x10000000 0x4040000 ${rootfs_size}"
         name: flash-rootfs
         successes:
         - message: "Written: OK"
@@ -92,6 +92,7 @@ actions:
           exception: JobError
           error: "Failed to flash rootfs"
 
+      # 刷写完成后 reset 启动 Linux，job 结束后设备保持上电（无 power_off_command）
       - command: "reset"
         name: reset
         wait_for_prompt: false

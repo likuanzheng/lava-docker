@@ -1,5 +1,8 @@
 FROM debian:trixie
 
+RUN find /etc/apt -name "*.list" -o -name "*.sources" | xargs sed -i \
+    -e 's|deb\.debian\.org|mirrors.tuna.tsinghua.edu.cn|g' \
+    -e 's|security\.debian\.org|mirrors.tuna.tsinghua.edu.cn|g' 2>/dev/null || true
 RUN apt-get update && apt-get -y install git
 RUN git clone https://github.com/BayLibre/lava-healthchecks-binary.git
 
