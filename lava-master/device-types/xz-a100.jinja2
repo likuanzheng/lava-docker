@@ -1,0 +1,17 @@
+{# device_type = "xz-a100" #}
+{# Phytium D2000 board, boots via TFTP + booti #}
+{% extends 'base-uboot.jinja2' %}
+{% set bootloader_prompt = bootloader_prompt|default('D2000#') %}
+{% set interrupt_char = ' ' %}
+{% set booti_kernel_addr = '0x80500000' %}
+{% set booti_ramdisk_addr = '0x89500000' %}
+{% set booti_dtb_addr = '0x88500000' %}
+{% set base_ip_args = 'ip=dhcp' %}
+{% set uboot_mkimage_arch = 'arm64' %}
+{% set uboot_tftp_commands = [
+    "tftpboot {KERNEL_ADDR} {KERNEL}",
+    "tftpboot {DTB_ADDR} {DTB}",
+    "tftpboot {RAMDISK_ADDR} {RAMDISK}"]
+-%}
+{% set console_device = 'ttyAMA1' %}
+{% set baud_rate = '115200' %}

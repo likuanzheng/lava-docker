@@ -13,6 +13,7 @@ if ls udev/*lavaworker-udev*rules 2>/dev/null; then
 fi
 
 chmod 777 ../../user-data/tftp/xt-c100-backup
+chmod 777 ../../user-data/tftp/xz-a100-backup
 
 docker compose build || exit 1
 docker compose up -d || exit 1
