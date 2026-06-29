@@ -248,8 +248,9 @@ if [ -e /root/device-types ];then
 			echo "WARNING: overwriting device-type $i"
 			diff -u "/etc/lava-server/dispatcher-config/device-types/$(basename $i)" $i
 		fi
-		cp $i /etc/lava-server/dispatcher-config/device-types/
-		chown lavaserver:lavaserver /etc/lava-server/dispatcher-config/device-types/$(basename $i)
+		# 软链到 bind mount 的 host 文件，使运行时编辑 user-data/device-types/ 即时生效，无需 rebuild
+		ln -sf "$i" /etc/lava-server/dispatcher-config/device-types/$(basename $i)
+		chown -h lavaserver:lavaserver /etc/lava-server/dispatcher-config/device-types/$(basename $i)
 		devicetype=$(basename $i |sed 's,.jinja2,,')
 		grep -q "[[:space:]]$devicetype[[:space:]]" /tmp/device-types.list
 		if [ $? -eq 0 ];then

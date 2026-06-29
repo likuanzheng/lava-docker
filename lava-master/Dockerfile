@@ -18,7 +18,8 @@ RUN if [ -e /etc/lava-server/dispatcher-config/health-checks/healthcheck_url ];t
 RUN chown -R lavaserver:lavaserver /etc/lava-server/dispatcher-config/health-checks/
 
 COPY devices/ /root/devices/
-COPY device-types/ /root/device-types/
+# device-types 不再烘进镜像：运行时由 bind mount user-data/device-types:/root/device-types 提供，
+# entrypoint 软链进 /etc/lava-server/dispatcher-config/device-types/，改模板无需 rebuild
 COPY users/ /root/lava-users/
 COPY groups/ /root/lava-groups/
 COPY tokens/ /root/lava-callback-tokens/
