@@ -38,5 +38,8 @@ slaves:
     extra_actions:
       - "apt-get install -y mosquitto-clients"
     custom_volumes:
+      # 仅留 job 运行时持续要读的：复位脚本 + tftp(供启动/备份落点)。
+      # 设备字典(devices/tags/aliases/deviceinfo)不挂载——reload 时由 docker cp 临时注入，
+      # 注册后内容已存进 master DB（见 push-device-dicts.sh / reload-*.sh）。
       - "../../user-data/power:/root/power"
       - "../../user-data/tftp:/var/lib/lava/dispatcher/tmp/tftp"

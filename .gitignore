@@ -2,5 +2,8 @@ output/
 user-data/tftp/*
 __pycache__/
 
-# boards.yaml 由 gen-boards.py 从 user-data/lab.yaml + user-data/devices/*.yaml 拼装，是生成产物
+# boards.yaml 由 gen-boards.py 从 user-data/lab.yaml 拼装，是生成产物
 boards.yaml
+
+# device-dicts/ 由 gen-device-dicts.py 从 user-data/devices/*.yaml 渲染，是生成产物（bind-mount 进 slave）
+user-data/device-dicts/

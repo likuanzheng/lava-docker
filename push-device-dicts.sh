@@ -1,0 +1,15 @@
+#!/bin/sh
+# 内部 helper（被 reload-devices.sh / reload-device-dicts.sh 调用，一般不单独跑）。
+# 渲染设备字典（host）→ 清掉 slave 容器里的旧目录 → docker cp 注入最新的
+# devices/tags/aliases/deviceinfo。设备字典不再 bind-mount，注册后内容已进 master DB；
+# 先清后拷保证删掉的设备不残留。
+set -e
+cd "$(dirname "$0")"
+
+python3 gen-device-dicts.py
+
+cd output/local
+docker compose exec -T lab-slave-0 rm -rf /root/devices /root/tags /root/aliases /root/deviceinfo
+for d in devices tags aliases deviceinfo; do
+	docker compose cp "../../user-data/device-dicts/$d" "lab-slave-0:/root/$d"
+done

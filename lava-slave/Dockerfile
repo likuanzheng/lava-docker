@@ -45,10 +45,8 @@ RUN cd /usr/lib/python3/dist-packages && for patch in $(ls /root/lava-patch/*pat
 # needed for lavacli identities
 RUN mkdir -p /root/.config
 
-COPY devices/ /root/devices/
-COPY tags/ /root/tags/
-COPY aliases/ /root/aliases/
-COPY deviceinfo/ /root/deviceinfo/
+# devices/tags/aliases/deviceinfo 改为运行时 bind-mount（见 boards.yaml slaves custom_volumes），
+# 不再烘进镜像：编辑 user-data/devices + gen-device-dicts.py + reload-devices.sh 即时生效。
 COPY entrypoint.d/* /root/entrypoint.d/
 RUN chmod +x /root/entrypoint.d/*
 
