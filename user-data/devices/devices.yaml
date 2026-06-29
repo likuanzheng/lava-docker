@@ -1,0 +1,57 @@
+# job 设备字典
+#
+# 由 gen-jobs.py 读取，配合 user-data/job-templates/<device_type>/<op>.yaml.j2
+# 渲染出 user-data/jobs/<name>-<op>.yaml（模拟 jenkins pipeline 的生成过程）。
+#
+# 字段说明：
+#   name        唯一设备实例 id（= boards.yaml 板名），作为生成 job 的文件名前缀
+#   device_type 设备类型，决定使用 job-templates/<device_type>/ 下哪套模板
+#   tags        可选；存在时才在 job 里渲染 `tags:`（按 tag 派发）。省略则按 device_type 派发
+#   jobs        声明该设备支持的操作及各自 timeouts（分钟）
+#   其余字段     device_type 特有参数，供模板取用
+---
+devices:
+  # ---- xz-a100：Phytium D2000，TFTP + booti，刷/备 nvme0n1 ----
+  - name: xz-a100-001-train
+    device_type: xz-a100
+    tags: [xz-a100-001-train]
+    boot_ipaddr: 192.168.32.152
+    netmask: 255.255.255.0
+    serverip: 192.168.32.9
+    gatewayip: 192.168.32.1
+    ethact: ethernet1@28210000
+    # 进 initramfs 后、执行 action 前的网卡配置（含 sleep）
+    net_setup: "ip link set eth0 up; ip link set eth1 up; ifconfig eth0 192.168.32.151 netmask 255.255.255.0; ifconfig eth1 192.168.32.152 netmask 255.255.255.0; ip link set eth0 down; sleep 3"
+    jobs:
+      flash:  { job: 60, action: 30, test: 55 }
+      backup: { job: 90, action: 80, test: 85 }
+
+  - name: xz-a100-001-infer
+    device_type: xz-a100
+    tags: [xz-a100-001-infer]
+    boot_ipaddr: 192.168.32.153
+    netmask: 255.255.255.0
+    serverip: 192.168.32.9
+    gatewayip: 192.168.32.1
+    ethact: ethernet1@28210000
+    net_setup: "ip link set eth0 down; ip link set eth1 down; ip link set eth1 address 02:00:00:00:01:53; ip link set eth1 up; ifconfig eth1 192.168.32.153 netmask 255.255.255.0; sleep 5"
+    jobs:
+      backup: { job: 90, action: 80, test: 85 }
+
+  # ---- xt-c100：Zynq UltraScale，ZynqMP>，刷/备 SPI flash 分区 ----
+  - name: xt-c100-001
+    device_type: xt-c100
+    # 无 tags：按 device_type 派发（保持现状）
+    ipaddr: 192.168.32.139
+    serverip: 192.168.32.9
+    uboot_prompt: 'ZynqMP>'
+    boot_prompt: 'root@'
+    linux_prompt: 'root@ACH-linux'
+    # SPI flash 分区表：kernel(image.ub) 32MB，rootfs(jffs2) 至 0x20000000
+    partitions:
+      kernel: { offset: '0x2040000', size:  '0x2000000' }
+      rootfs: { offset: '0x4040000', erase: '0x1BFC0000', read: '0x1FBC0000' }
+    jobs:
+      boot:   { job: 10,  action: 5,   test: 2 }
+      flash:  { job: 30,  action: 20,  test: 25 }
+      backup: { job: 120, action: 115, test: 115 }

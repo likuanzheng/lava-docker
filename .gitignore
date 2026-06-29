@@ -1,2 +1,5 @@
 output/
 user-data/tftp/*
+
+# device-types 以 user-data/device-types 为唯一源，lava-master 那份由 sync-device-types.sh 生成
+lava-master/device-types/*.jinja2
