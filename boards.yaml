@@ -23,7 +23,6 @@ slaves:
     extra_actions:
       - "apt-get install -y mosquitto-clients"
     custom_volumes:
-      - "../../user-data/jobs:/root/jobs"
       - "../../user-data/power:/root/power"
       - "../../user-data/tftp:/var/lib/lava/dispatcher/tmp/tftp"
 
