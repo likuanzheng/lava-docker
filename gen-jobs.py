@@ -13,21 +13,14 @@ from pathlib import Path
 import yaml
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-ROOT = Path(__file__).resolve().parent
-DEVICES_FILE = ROOT / "user-data" / "devices" / "devices.yaml"
+from assemble_devices import ROOT, load_devices
+
 TEMPLATES_DIR = ROOT / "user-data" / "job-templates"
 JOBS_DIR = ROOT / "user-data" / "jobs"
 
 
 def main():
-    if not DEVICES_FILE.exists():
-        sys.exit(f"ERROR: 设备字典不存在: {DEVICES_FILE}")
-
-    with DEVICES_FILE.open(encoding="utf-8") as f:
-        data = yaml.safe_load(f) or {}
-    devices = data.get("devices") or []
-    if not devices:
-        sys.exit(f"ERROR: {DEVICES_FILE} 中没有 devices 条目")
+    devices = load_devices()
 
     env = Environment(
         loader=FileSystemLoader(str(TEMPLATES_DIR)),
@@ -51,8 +44,8 @@ def main():
             if not tpl_path.exists():
                 sys.exit(f"ERROR: 缺少模板 {tpl_path}（设备 {name} 的 {op} 操作）")
 
-            # 渲染上下文 = 设备全部字段 + 该操作的 timeouts（覆盖同名 jobs 字段）
-            ctx = {k: v for k, v in dev.items() if k != "jobs"}
+            # 渲染上下文 = 设备字段（去掉非模板字段）+ 该操作的 timeouts
+            ctx = {k: v for k, v in dev.items() if k not in ("jobs", "power", "__src")}
             ctx.setdefault("tags", None)   # 可选字段，模板用 `{% if tags %}` 判断
             ctx["op"] = op
             ctx["timeouts"] = timeouts

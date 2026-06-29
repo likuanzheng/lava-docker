@@ -1,0 +1,26 @@
+# 设备实例：xt-c100-001（Zynq UltraScale，ZynqMP>，刷/备 SPI flash 分区）
+#
+# 无 tags：按 device_type 派发（保持现状）。
+---
+name: xt-c100-001
+device_type: xt-c100
+slave: lab-slave-0
+connection_command: telnet 192.168.32.9 3333
+power:
+  mqtt_topic: b0a604429004
+  reset_script: mqtt-reset.sh
+
+ipaddr: 192.168.32.139
+serverip: 192.168.32.9
+uboot_prompt: 'ZynqMP>'
+boot_prompt: 'root@'
+linux_prompt: 'root@ACH-linux'
+# SPI flash 分区表：kernel(image.ub) 32MB，rootfs(jffs2) 至 0x20000000
+partitions:
+  kernel: { offset: '0x2040000', size:  '0x2000000' }
+  rootfs: { offset: '0x4040000', erase: '0x1BFC0000', read: '0x1FBC0000' }
+
+jobs:
+  boot:   { job: 10,  action: 5,   test: 2 }
+  flash:  { job: 30,  action: 20,  test: 25 }
+  backup: { job: 120, action: 115, test: 115 }

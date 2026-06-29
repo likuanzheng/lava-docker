@@ -7,8 +7,8 @@
 #              └─(lavalab-gen.sh 复制)→ output/local/master1/device-types/
 #                  └─(Dockerfile COPY)→ master 镜像
 #
-# 运行顺序：./sync-device-types.sh → python3 gen-jobs.py → ./lavalab-gen.sh boards.yaml
-#           → cd output/local && ./deploy.sh
+# 运行顺序：./sync-device-types.sh → python3 gen-jobs.py → python3 gen-boards.py
+#           → ./lavalab-gen.sh boards.yaml → cd output/local && ./deploy.sh
 set -e
 
 cd "$(dirname "$0")"

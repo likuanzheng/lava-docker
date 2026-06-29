@@ -1,0 +1,20 @@
+# 设备实例：xz-a100-001-infer（Phytium D2000，TFTP + booti，备 nvme0n1）
+---
+name: xz-a100-001-infer
+device_type: xz-a100
+slave: lab-slave-0
+tags: [xz-a100-001-infer]
+connection_command: telnet 192.168.32.232 3334
+power:
+  mqtt_topic: b0a60441c62c
+  reset_script: mqtt-reset-ceaEdge-a100.sh
+
+boot_ipaddr: 192.168.32.153
+netmask: 255.255.255.0
+serverip: 192.168.32.9
+gatewayip: 192.168.32.1
+ethact: ethernet1@28210000
+net_setup: "ip link set eth0 down; ip link set eth1 down; ip link set eth1 address 02:00:00:00:01:53; ip link set eth1 up; ifconfig eth1 192.168.32.153 netmask 255.255.255.0; sleep 5"
+
+jobs:
+  backup: { job: 90, action: 80, test: 85 }

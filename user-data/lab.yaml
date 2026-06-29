@@ -1,0 +1,42 @@
+# 实验室基础设施配置（非 per-device）
+#
+# 与 user-data/devices/<name>.yaml 一起，由 gen-boards.py 拼装成根目录 boards.yaml
+# （lavalab-gen 的输入，已 .gitignore，是生成产物）。
+#
+# - masters / slaves：照搬给 lavalab-gen，masters↔slaves 通过 remote_master/remote_user/token 耦合。
+# - power_defaults：仅 gen-boards.py 使用，把每台设备的 power.mqtt_topic / power.reset_script
+#   展开成 boards 里的 power_on_command / hard_reset_command；不会写进生成的 boards.yaml。
+---
+power_defaults:
+  mqtt_host: 192.168.32.9
+  mqtt_user: ywyh
+  mqtt_pass: 'ywyh@204'
+  reset_script_dir: /root/power
+
+masters:
+  - name: master1
+    host: local
+    webinterface_port: 10070
+    http_fqdn: "http://*:10070"
+    allowed_hosts:
+      - "*"
+    users:
+      - name: ywyh
+        token: longrandomtokenadmin
+        password: ywyh@204
+        superuser: true
+        staff: true
+    custom_volumes:
+      - "../../user-data/device-types:/root/device-types"
+
+slaves:
+  - name: lab-slave-0
+    host: local
+    remote_master: master1
+    remote_user: ywyh
+    dispatcher_ip: 192.168.32.9
+    extra_actions:
+      - "apt-get install -y mosquitto-clients"
+    custom_volumes:
+      - "../../user-data/power:/root/power"
+      - "../../user-data/tftp:/var/lib/lava/dispatcher/tmp/tftp"

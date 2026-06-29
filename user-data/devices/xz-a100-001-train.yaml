@@ -1,0 +1,25 @@
+# 设备实例：xz-a100-001-train（Phytium D2000，TFTP + booti，刷/备 nvme0n1）
+#
+# 唯一设备源：同时供 gen-boards.py（拼 boards.yaml）和 gen-jobs.py（渲染 job）使用。
+# 文件名须与 name 一致。字段说明见 user-data/devices/_README 或 lava-userdata-layout 约定。
+---
+name: xz-a100-001-train
+device_type: xz-a100
+slave: lab-slave-0
+tags: [xz-a100-001-train]
+connection_command: telnet 192.168.32.232 3333
+power:
+  mqtt_topic: 8cce4e51e192
+  reset_script: mqtt-reset-a100.sh
+
+boot_ipaddr: 192.168.32.152
+netmask: 255.255.255.0
+serverip: 192.168.32.9
+gatewayip: 192.168.32.1
+ethact: ethernet1@28210000
+# 进 initramfs 后、执行 action 前的网卡配置（含 sleep）
+net_setup: "ip link set eth0 up; ip link set eth1 up; ifconfig eth0 192.168.32.151 netmask 255.255.255.0; ifconfig eth1 192.168.32.152 netmask 255.255.255.0; ip link set eth0 down; sleep 3"
+
+jobs:
+  flash:  { job: 60, action: 30, test: 55 }
+  backup: { job: 90, action: 80, test: 85 }

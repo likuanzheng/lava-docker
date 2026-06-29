@@ -1,5 +1,9 @@
 output/
 user-data/tftp/*
+__pycache__/
+
+# boards.yaml 由 gen-boards.py 从 user-data/lab.yaml + user-data/devices/*.yaml 拼装，是生成产物
+boards.yaml
 
 # device-types 以 user-data/device-types 为唯一源，lava-master 那份由 sync-device-types.sh 生成
 lava-master/device-types/*.jinja2
