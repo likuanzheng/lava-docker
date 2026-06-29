@@ -24,6 +24,7 @@ slaves:
       - "apt-get install -y mosquitto-clients"
     custom_volumes:
       - "../../user-data/jobs:/root/jobs"
+      - "../../user-data/power:/root/power"
       - "../../user-data/tftp:/var/lib/lava/dispatcher/tmp/tftp"
 
 boards:
@@ -33,7 +34,7 @@ boards:
     connection_command: telnet 192.168.32.9 3333
     pdu_generic:
       power_on_command: mosquitto_pub -h 192.168.32.9 -u ywyh -P 'ywyh@204' -t b0a604429004-set -m '{"key":1,"messageId":"","type":"event"}'
-      hard_reset_command: "bash /root/jobs/mqtt-reset.sh"
+      hard_reset_command: "bash /root/power/mqtt-reset.sh"
   - name: xz-a100-001-train
     type: xz-a100
     slave: lab-slave-0
@@ -42,7 +43,7 @@ boards:
     connection_command: telnet 192.168.32.232 3333
     pdu_generic:
       power_on_command: mosquitto_pub -h 192.168.32.9 -u ywyh -P 'ywyh@204' -t 8cce4e51e192-set -m '{"key":1,"messageId":"","type":"event"}'
-      hard_reset_command: "bash /root/jobs/mqtt-reset-a100.sh"
+      hard_reset_command: "bash /root/power/mqtt-reset-a100.sh"
   - name: xz-a100-001-infer
     type: xz-a100
     slave: lab-slave-0
@@ -51,4 +52,4 @@ boards:
     connection_command: telnet 192.168.32.232 3334
     pdu_generic:
       power_on_command: mosquitto_pub -h 192.168.32.9 -u ywyh -P 'ywyh@204' -t b0a60441c62c-set -m '{"key":1,"messageId":"","type":"event"}'
-      hard_reset_command: "bash /root/jobs/mqtt-reset-ceaEdge-a100.sh"
+      hard_reset_command: "bash /root/power/mqtt-reset-ceaEdge-a100.sh"
