@@ -52,7 +52,7 @@ actions:
           exception: JobError
           error: "Failed to read kernel partition from flash"
 
-      - command: "tftpput 0x10000000 {{ partitions.kernel.size }} tftp/{{ device_type }}-backup/image.ub"
+      - command: "tftpput 0x10000000 {{ partitions.kernel.size }} tftp/_backup/{{ device_type }}/image.ub"
         name: upload-kernel
         wait_for_prompt: false
         successes:
@@ -78,7 +78,7 @@ actions:
           exception: JobError
           error: "Failed to read rootfs partition from flash"
 
-      - command: "tftpput 0x10000000 {{ partitions.rootfs.read }} tftp/{{ device_type }}-backup/rootfs.jffs2"
+      - command: "tftpput 0x10000000 {{ partitions.rootfs.read }} tftp/_backup/{{ device_type }}/rootfs.jffs2"
         name: upload-rootfs
         wait_for_prompt: false
         successes:

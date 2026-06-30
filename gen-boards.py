@@ -15,7 +15,9 @@ from pathlib import Path
 
 import yaml
 
-from assemble_devices import ROOT
+# 本脚本留在仓库根（构建/拓扑链路）；注入用的 assemble_devices.py 已迁入 user-data/，
+# 这里只需仓库根路径，故就地计算，不再 import。
+ROOT = Path(__file__).resolve().parent
 
 LAB_FILE = ROOT / "user-data" / "lab.yaml"
 BOARDS_FILE = ROOT / "boards.yaml"

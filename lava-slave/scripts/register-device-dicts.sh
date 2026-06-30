@@ -2,7 +2,7 @@
 # 设备字典：把每台设备的 dict 内容（connection_command/power 等 jinja2）经 lavacli
 # dict set 推到 master（对应工作流第 4 步）。
 #
-# 由根目录 reload-device-dicts.sh 在 slave 容器内调用。读 bind-mount 进来的
+# 由 user-data/reload-device-dicts.sh 在 slave 容器内调用。读 bind-mount 进来的
 # /root/devices/<worker>/<name>.jinja2（= user-data/device-dicts/，gen-device-dicts.py 渲染）。
 # 设备需已注册（先跑板级注册 reload-devices.sh）；未注册的设备会跳过并告警。幂等可重复跑。
 

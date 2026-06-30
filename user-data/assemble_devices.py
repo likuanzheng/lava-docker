@@ -3,6 +3,7 @@
 
 唯一设备源是 user-data/devices/ 下「每台一个」的 YAML 文件（顶层即设备字段）。
 gen-jobs.py 与 gen-device-dicts.py 都通过本模块加载，保证两边看到的是同一份设备清单。
+本模块与上述生成器同处 user-data/，故 ROOT 取本文件上两级（= 仓库根）。
 
 约定：
   - 文件名（去扩展名）必须等于设备的 name 字段，文件名即权威 id。
@@ -12,7 +13,7 @@ from pathlib import Path
 
 import yaml
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 DEVICES_DIR = ROOT / "user-data" / "devices"
 
 

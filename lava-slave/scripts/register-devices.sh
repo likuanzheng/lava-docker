@@ -3,7 +3,7 @@
 # 类型/worker/tags/health/user/group）。**不含设备字典**——字典由 register-device-dicts.sh
 # 单独 dict set（对应工作流第 3、4 步分离）。
 #
-# 由根目录 reload-devices.sh 在 slave 容器内调用。读 bind-mount 进来的
+# 由 user-data/reload-devices.sh 在 slave 容器内调用。读 bind-mount 进来的
 # /root/{devices,tags,aliases,deviceinfo}（= user-data/device-dicts/，gen-device-dicts.py 渲染）。
 # worker 由 setup.sh 在启动时注册，本脚本不碰 worker、不 retire，幂等可重复跑。
 

@@ -1,6 +1,12 @@
 output/
-user-data/tftp/*
 __pycache__/
+
+# tftp 是被 TFTP/HTTP 服务的运行时数据（镜像/产物/备份/配套脚本），整体不入库、可随时删。
+# 配套脚本由 gen-jobs.py 从 job-templates/<dt>/*.sh(.j2) 物化进来，是产物不是源。
+# 仅保留目录骨架(.gitkeep)以固化结构。
+user-data/tftp/**
+!user-data/tftp/**/
+!user-data/tftp/**/.gitkeep
 
 # boards.yaml 由 gen-boards.py 从 user-data/lab.yaml 拼装，是生成产物
 boards.yaml

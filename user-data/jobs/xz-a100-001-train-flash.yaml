@@ -2,6 +2,8 @@
 device_type: xz-a100
 job_name: xz-a100-001-train flash rootfs to nvme
 tags:
+  - xz-a100
+  - xz-a100-train
   - xz-a100-001-train
 
 # 刷机流程：

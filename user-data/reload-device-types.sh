@@ -6,18 +6,23 @@
 #    LAVA 运行时目录并注册（lava-server manage device-types add）。
 #  - 模板源经 bind mount 已在容器内 /root/device-types/ 可见。
 set -e
-cd "$(dirname "$0")/output/local"
+cd "$(dirname "$0")/../output/local"
 
 docker compose exec -T master1 sh -c '
+  # 循环外一次性取全量列表（完整读完，避免 grep -q 提前关管道触发 lava-server 的
+  # BrokenPipeError；也省去每个类型都跑一次 list 的浪费）。
+  existing=$(lava-server manage device-types --no-color list)
   for i in /root/device-types/*.jinja2; do
     [ -e "$i" ] || continue
     ln -sf "$i" /etc/lava-server/dispatcher-config/device-types/$(basename "$i")
     chown -h lavaserver:lavaserver /etc/lava-server/dispatcher-config/device-types/$(basename "$i")
     dt=$(basename "$i" .jinja2)
-    if lava-server manage device-types --no-color list | grep -qw "$dt"; then
+    if printf "%s\n" "$existing" | grep -qw "$dt"; then
       echo "已有 $dt（模板已刷新）"
     else
       echo "注册新 device-type $dt"
       lava-server manage device-types add "$dt"
+      existing="$existing
+$dt"
     fi
   done'

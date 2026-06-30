@@ -5,6 +5,7 @@
 name: xt-c100-001
 device_type: xt-c100
 slave: lab-slave-0
+tags: [xt-c100, xt-c100-001]
 connection_command: telnet 192.168.32.9 3333
 power:
   mqtt_topic: b0a604429004

@@ -2,6 +2,8 @@
 device_type: xz-a100
 job_name: xz-a100-001-infer backup nvme to server
 tags:
+  - xz-a100
+  - xz-a100-infer
   - xz-a100-001-infer
 
 # 备份流程：

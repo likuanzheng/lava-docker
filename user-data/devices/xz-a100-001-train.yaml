@@ -6,7 +6,7 @@
 name: xz-a100-001-train
 device_type: xz-a100
 slave: lab-slave-0
-tags: [xz-a100-001-train]
+tags: [xz-a100, xz-a100-train, xz-a100-001-train]
 connection_command: telnet 192.168.32.232 3333
 power:
   mqtt_topic: 8cce4e51e192
