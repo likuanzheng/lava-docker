@@ -15,7 +15,9 @@
 > 第 2~3 步都对**运行中的集群**经 lavacli 操作，幂等可重复跑。
 > 第 2 步 `reload-all.sh` 按严格依赖顺序串起 device-types → devices → device-dicts
 > （板级 add 需类型存在；dict set 需设备已注册）；数据源全部来自 `user-data/`。
-> 如需单独跑某一环，仍可分别调用 `reload-device-types.sh` / `reload-devices.sh` / `reload-device-dicts.sh`。
+> 入口脚本（`reload-all.sh` / `submit-job.sh` / `gen-jobs.py`）在 `user-data/` 顶层；
+> 被它们调用的内部脚本收在 `user-data/scripts/`。如需单独跑某一环，分别调用
+> `scripts/reload-device-types.sh` / `scripts/reload-devices.sh` / `scripts/reload-device-dicts.sh`。
 
 ---
 
@@ -35,13 +37,13 @@ $EDITOR user-data/devices/<name>.yaml            # 一台一文件，文件名 =
 # 一步注入到运行中的集群（严格依赖顺序，全程幂等）：
 ./user-data/reload-all.sh
 ```
-`reload-all.sh` 依次执行：
-1. `reload-device-types.sh` —— 软链类型模板并注册（`device-types add`）
-2. `reload-devices.sh` —— 渲染 `device-dicts/` → `lavacli devices add/update`（类型/worker/tags/health）
-3. `reload-device-dicts.sh` —— `lavacli devices dict set`（连接/电源等 dict 内容）
+`reload-all.sh`（顶层入口）依次执行 `scripts/` 下三个内部脚本：
+1. `scripts/reload-device-types.sh` —— 软链类型模板并注册（`device-types add`）
+2. `scripts/reload-devices.sh` —— 渲染 `device-dicts/` → `lavacli devices add/update`（类型/worker/tags/health）
+3. `scripts/reload-device-dicts.sh` —— `lavacli devices dict set`（连接/电源等 dict 内容）
 
 > 数据源全部来自 `user-data/`。需要单独跑某一环（如只改了 `connection_command`/`power`，
-> 只需第 3 环）时，可分别调用上面三个脚本；拿不准就跑 `reload-all.sh`（幂等）。
+> 只需第 3 环）时，可分别调用上面三个 `scripts/` 脚本；拿不准就跑 `reload-all.sh`（幂等）。
 
 ## 3. 提交 job
 ```sh
@@ -59,8 +61,7 @@ device_type: <type>
 slave: lab-slave-0
 connection_command: telnet <host> <port>
 power:
-  mqtt_topic: <topic>
-  reset_script: <脚本名，位于 user-data/power/>
+  mqtt_topic: <topic>          # 开机/硬复位命令由 gen-device-dicts 内联生成，无需脚本文件
 jobs:                   # 可选，要出 job 才写
   boot: { job: 10, action: 5, test: 2 }
 # 可选：tags / aliases / user / group / 各 job 模板用到的字段

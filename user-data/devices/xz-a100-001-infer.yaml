@@ -7,7 +7,6 @@ tags: [xz-a100, xz-a100-infer, xz-a100-001-infer]
 connection_command: telnet 192.168.32.232 3334
 power:
   mqtt_topic: b0a60441c62c
-  reset_script: mqtt-reset-ceaEdge-a100.sh
 
 boot_ipaddr: 192.168.32.153
 netmask: 255.255.255.0

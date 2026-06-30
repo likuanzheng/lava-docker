@@ -6,4 +6,4 @@ set -e
 cd "$(dirname "$0")"
 
 ./push-device-dicts.sh
-cd ../output/local && docker compose exec -T lab-slave-0 /usr/local/bin/register-device-dicts.sh
+cd ../../output/local && docker compose exec -T lab-slave-0 /usr/local/bin/register-device-dicts.sh

@@ -8,7 +8,7 @@ cd "$(dirname "$0")"
 
 python3 gen-device-dicts.py
 
-cd ../output/local
+cd ../../output/local
 docker compose exec -T lab-slave-0 rm -rf /root/devices /root/tags /root/aliases /root/deviceinfo
 for d in devices tags aliases deviceinfo; do
 	docker compose cp "../../user-data/device-dicts/$d" "lab-slave-0:/root/$d"

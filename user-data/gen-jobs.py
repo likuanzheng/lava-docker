@@ -10,7 +10,7 @@ job-templates/<dt>/*.sh.j2 渲染、*.sh 原样拷贝 → user-data/tftp/<dt>/*.
 供 job 运行时经 HTTP curl 下来执行（见 WORKFLOW「tftp 目录约定」/ 构建法则·法则6）。
 tftp 是可删的运行时数据，这些脚本是产物——删掉 tftp 后重跑本脚本即恢复。
 
-只写自己生成的文件（按名覆盖），不触碰 jobs/ 下的其它文件（如 mqtt-reset*.sh）。
+只写自己生成的文件（按名覆盖），不触碰 jobs/ 下的其它文件。
 """
 import shutil
 import sys
@@ -19,6 +19,8 @@ from pathlib import Path
 import yaml
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
+# 共享加载器在 user-data/scripts/（内部脚本目录），把它加进 import 路径
+sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
 from assemble_devices import ROOT, load_devices
 
 TEMPLATES_DIR = ROOT / "user-data" / "job-templates"

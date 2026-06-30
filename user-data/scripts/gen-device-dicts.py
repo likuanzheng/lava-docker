@@ -27,20 +27,26 @@ from assemble_devices import ROOT, load_devices
 LAB_FILE = ROOT / "user-data" / "lab.yaml"
 OUT_DIR = ROOT / "user-data" / "device-dicts"
 
-POWER_ON_FMT = (
+MQTT_PUB_FMT = (
     "mosquitto_pub -h {host} -u {user} -P '{pwd}' "
-    "-t {topic}-set -m '{{\"key\":1,\"messageId\":\"\",\"type\":\"event\"}}'"
+    "-t {topic}-set -m '{{\"key\":{key},\"messageId\":\"\",\"type\":\"event\"}}'"
 )
 
 
 def expand_power(power, pd):
-    """power.{mqtt_topic, reset_script} + lab.power_defaults → pdu_generic 命令。"""
-    return {
-        "power_on_command": POWER_ON_FMT.format(
+    """power.mqtt_topic + lab.power_defaults → pdu_generic 命令（全内联，无脚本文件）。
+
+    hard_reset = 关(key:0) → sleep 5 → 开(key:1)，与旧 mqtt-reset*.sh 等价但不落文件。
+    """
+    def pub(key):
+        return MQTT_PUB_FMT.format(
             host=pd["mqtt_host"], user=pd["mqtt_user"], pwd=pd["mqtt_pass"],
-            topic=power["mqtt_topic"],
-        ),
-        "hard_reset_command": f"bash {pd['reset_script_dir']}/{power['reset_script']}",
+            topic=power["mqtt_topic"], key=key,
+        )
+
+    return {
+        "power_on_command": pub(1),
+        "hard_reset_command": f"{pub(0)}; sleep 5; {pub(1)}",
     }
 
 

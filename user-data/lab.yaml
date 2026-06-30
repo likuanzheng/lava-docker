@@ -4,14 +4,13 @@
 # （lavalab-gen 的输入，已 .gitignore，是生成产物）。
 #
 # - masters / slaves：照搬给 lavalab-gen，masters↔slaves 通过 remote_master/remote_user/token 耦合。
-# - power_defaults：仅 gen-boards.py 使用，把每台设备的 power.mqtt_topic / power.reset_script
-#   展开成 boards 里的 power_on_command / hard_reset_command；不会写进生成的 boards.yaml。
+# - power_defaults：gen-device-dicts.py 使用，把每台设备的 power.mqtt_topic
+#   展开成设备 dict 的 power_on_command / hard_reset_command（全内联，无脚本文件）。
 ---
 power_defaults:
   mqtt_host: 192.168.32.9
   mqtt_user: ywyh
   mqtt_pass: 'ywyh@204'
-  reset_script_dir: /root/power
 
 masters:
   - name: master1
@@ -38,8 +37,7 @@ slaves:
     extra_actions:
       - "apt-get install -y mosquitto-clients"
     custom_volumes:
-      # 仅留 job 运行时持续要读的：复位脚本 + tftp(供启动/备份落点)。
+      # 仅留 job 运行时持续要读的：tftp(供启动/备份落点)。复位/开机命令已内联进设备 dict，无需挂 power。
       # 设备字典(devices/tags/aliases/deviceinfo)不挂载——reload 时由 docker cp 临时注入，
-      # 注册后内容已存进 master DB（见 push-device-dicts.sh / reload-*.sh）。
-      - "../../user-data/power:/root/power"
+      # 注册后内容已存进 master DB（见 scripts/push-device-dicts.sh / scripts/reload-*.sh）。
       - "../../user-data/tftp:/var/lib/lava/dispatcher/tmp/tftp"

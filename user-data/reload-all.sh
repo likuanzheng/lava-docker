@@ -8,8 +8,8 @@
 set -e
 cd "$(dirname "$0")"
 
-./reload-device-types.sh
-./reload-devices.sh
-./reload-device-dicts.sh
+./scripts/reload-device-types.sh
+./scripts/reload-devices.sh
+./scripts/reload-device-dicts.sh
 
 echo "reload-all 完成：device-types / devices / device-dicts 已注入集群。"

@@ -10,7 +10,6 @@ tags: [xz-a100, xz-a100-train, xz-a100-001-train]
 connection_command: telnet 192.168.32.232 3333
 power:
   mqtt_topic: 8cce4e51e192
-  reset_script: mqtt-reset-a100.sh
 
 boot_ipaddr: 192.168.32.152
 netmask: 255.255.255.0

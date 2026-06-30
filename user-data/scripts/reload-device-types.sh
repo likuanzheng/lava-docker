@@ -6,7 +6,7 @@
 #    LAVA 运行时目录并注册（lava-server manage device-types add）。
 #  - 模板源经 bind mount 已在容器内 /root/device-types/ 可见。
 set -e
-cd "$(dirname "$0")/../output/local"
+cd "$(dirname "$0")/../../output/local"
 
 docker compose exec -T master1 sh -c '
   # 循环外一次性取全量列表（完整读完，避免 grep -q 提前关管道触发 lava-server 的
