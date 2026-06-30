@@ -1,0 +1,68 @@
+# device-type 级健康检查：LAVA 按频率自动在每台 xz-a100 上跑，过=Health Good、挂=Bad 进维护。
+# 注入位置：master:/etc/lava-server/dispatcher-config/health-checks/xz-a100.yaml（由 scripts/reload-health-checks.sh）。
+#
+# 启动方式：只复位电源、等板子从本地系统(nvme)自启到登录符 → 登录 → 跑命令。
+#   不 TFTP、不引导 RAM 系统，因此完全【设备无关】：一份文件覆盖任意数量 A100。
+#
+# 检查项：复位(LAVA 起 job 即跑设备 dict 内联的 hard_reset)→串口/启动到控制台(等登录符)
+#         →登录(ywyh)→内核保活(uname -a)→存储(ls /dev/nvme0n1)。
+#
+# ⚠ 提示符是【占位】，按 A100 本地系统实际改（标 CONFIRM 处）：
+#   - 登录符：上电自启后停的提示符（占位 'login:'）
+#   - shell 符：登录后的提示符（占位 'ywyh@'）
+device_type: xz-a100
+job_name: xz-a100 health check
+timeouts:
+  job:
+    minutes: 8
+  action:
+    minutes: 5
+priority: high
+visibility: public
+
+actions:
+- boot:
+    method: minimal
+    prompts:
+      - 'login:'         # CONFIRM 占位：上电自启后的登录提示符
+    timeout:
+      minutes: 5
+
+- test:
+    timeout:
+      minutes: 3
+    interactive:
+    - name: login
+      prompts: ['login:', 'ywyh@']   # CONFIRM 占位：登录符 / 登录后 shell 符
+      script:
+      - command: null
+        name: wait-login-prompt
+      - command: "ywyh"              # 默认用户名
+        name: login-user
+        wait_for_prompt: false
+      - command: "ywyh@204"          # 默认密码（与 lab.yaml 一致，明文）
+        name: login-pass
+        wait_for_prompt: false
+      - command: null
+        name: wait-shell
+
+    - name: health-asserts
+      prompts: ['ywyh@']   # CONFIRM 占位：登录后的 shell 提示符
+      script:
+      - command: "uname -a"
+        name: kernel-alive
+        successes:
+        - message: "Linux"
+        failures:
+        - message: "command not found"
+          exception: JobError
+          error: "内核保活检查失败"
+
+      - command: "ls /dev/nvme0n1"
+        name: storage-present
+        successes:
+        - message: "/dev/nvme0n1"
+        failures:
+        - message: "No such file"
+          exception: JobError
+          error: "存储 /dev/nvme0n1 不存在（备份/刷写 job 会失败）"

@@ -37,10 +37,11 @@ $EDITOR user-data/devices/<name>.yaml            # 一台一文件，文件名 =
 # 一步注入到运行中的集群（严格依赖顺序，全程幂等）：
 ./user-data/reload-all.sh
 ```
-`reload-all.sh`（顶层入口）依次执行 `scripts/` 下三个内部脚本：
+`reload-all.sh`（顶层入口）依次执行 `scripts/` 下的内部脚本：
 1. `scripts/reload-device-types.sh` —— 软链类型模板并注册（`device-types add`）
-2. `scripts/reload-devices.sh` —— 渲染 `device-dicts/` → `lavacli devices add/update`（类型/worker/tags/health）
-3. `scripts/reload-device-dicts.sh` —— `lavacli devices dict set`（连接/电源等 dict 内容）
+2. `scripts/reload-health-checks.sh` —— 把 `job-templates/<dt>/healthcheck.yaml` 注入 master 的 health-checks 目录
+3. `scripts/reload-devices.sh` —— 渲染 `device-dicts/` → `lavacli devices add/update`（类型/worker/tags/health）
+4. `scripts/reload-device-dicts.sh` —— `lavacli devices dict set`（连接/电源等 dict 内容）
 
 > 数据源全部来自 `user-data/`。需要单独跑某一环（如只改了 `connection_command`/`power`，
 > 只需第 3 环）时，可分别调用上面三个 `scripts/` 脚本；拿不准就跑 `reload-all.sh`（幂等）。
@@ -69,6 +70,16 @@ jobs:                   # 可选，要出 job 才写
 
 ### 改了基础设施 / 加 slave 节点
 改 `user-data/lab.yaml` 后重跑 `./deploy-cluster.sh`（这才需要 compose up）。
+
+### 健康检查（device-type 自检）
+源 `user-data/job-templates/<dt>/healthcheck.yaml`（device-type 级、设备无关的 boot+冒烟 job），
+由 `scripts/reload-health-checks.sh` 注入 master 的 `/etc/lava-server/dispatcher-config/health-checks/<dt>.yaml`。
+LAVA 按设备类型的健康检查频率（默认约 24h）自动派给该类型每台设备：过=Health Good、挂=Bad 自动进维护、不再接 job。
+- `xz-a100`：只复位电源、等板子从本地 nvme 系统自启进 shell（`method: minimal`，**不 TFTP**），
+  再 `uname -a`(内核保活) + `ls /dev/nvme0n1`(存储)。**完全设备无关——一份文件覆盖任意数量 A100**，
+  加新 A100 型号（新 device-type）只需再放一份它的 `healthcheck.yaml`，`reload-health-checks.sh` 自动带上。
+- 上游 `lava-master/Dockerfile` 仍在 build 时烘入空 health-checks/ + BayLibre 样例；本仓库改运行时注入
+  （与法则2 一致，Dockerfile 那段可后续清理）。
 
 ---
 
