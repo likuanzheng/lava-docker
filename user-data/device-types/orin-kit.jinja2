@@ -1,0 +1,31 @@
+{# device_type = "orin-kit" #}
+{# NVIDIA Jetson AGX Orin Developer Kit（Tegra t234，arm64）。 #}
+{# 启动链：MB1→MB2→BL31→OP-TEE→Jetson UEFI→L4TLauncher Direct Boot→Linux(eMMC mmcblk0p1)→Ubuntu 22.04。 #}
+{# 无 U-Boot、无可打断的 bootloader 提示符：上电即从本地 eMMC 自启到 Ubuntu 登录符。 #}
+{# 故 boot 只用 method: minimal（复位+连串口+等提示符），与 xz-a100 健康检查同思路，完全设备无关、不 TFTP。 #}
+{% extends 'base.jinja2' %}
+
+{% block body %}
+
+{% set console_device = console_device | default('ttyTCU0') %}
+{% set baud_rate = baud_rate | default('115200') %}
+
+actions:
+  deploy:
+    connections:
+      serial:
+    methods:
+      ssh:
+        options:
+{{ ssh_options }}
+        host: '{{ ssh_host|default('') }}'
+        user: {{ ssh_user|default('root') }}
+        port: {{ ssh_port|default(22) }}
+        identity_file: {{ ssh_identity_file }}
+  boot:
+    connections:
+      serial:
+    methods:
+      minimal:
+      ssh:
+{% endblock body %}

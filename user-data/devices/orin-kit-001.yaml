@@ -1,0 +1,25 @@
+# 设备实例：orin-kit-001（NVIDIA Jetson AGX Orin Developer Kit，t234/arm64）
+#
+# 从本地 eMMC(mmcblk0p1) UEFI 自启到 Ubuntu 22.04，无 U-Boot、不 TFTP，故无网络/引导参数。
+# 重启 = MQTT 继电器硬断电重上电（topic 由 gen-device-dicts.py 内联进 device dict）。
+# jobs: {} —— 本类型暂无 per-device 操作（flash/backup）；健康检查是 device-type 级，
+#   由 job-templates/orin-kit/healthcheck.yaml 经 reload-health-checks.sh 注入，不走这里。
+#
+# connection_command：串口端口(3337)只有设备上电后才存在，关机时连接会被拒。
+#   故包一层 `while true; do socat …; sleep 1; done` 持续重连：
+#   - 起 job 时设备可能关着 → 重试循环挂住等 hard_reset 上电后接上；
+#   - 中途 power-cycle 掉线 → 自动重连，串口流对 LAVA 连续不断。
+#   ⚠ 用 socat 而非 telnet：telnet 自带本地回显/协议协商，会把 auto_login 的用户名/密码打乱
+#     （现象 ywyh→wyh、密码明文回显 → Login incorrect）。socat -,raw,echo=0 是无回显裸透传。
+#     escape=0x1d 供人工 ctrl+] 退出（LAVA 不受影响）。slave 需装 socat（见 lab.yaml extra_actions）。
+#   只能用双引号：gen-device-dicts.py 把该值渲染进单引号里；LAVA 用 shlex 还原 sh -c "…" 为单命令。
+---
+name: orin-kit-001
+device_type: orin-kit
+slave: lab-slave-0
+tags: [orin-kit, orin-kit-001]
+connection_command: 'sh -c "while true; do socat -,raw,echo=0,escape=0x1d TCP:192.168.32.232:3337; sleep 1; done"'
+power:
+  mqtt_topic: 8cce4e4f0b37
+
+jobs: {}

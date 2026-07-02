@@ -36,7 +36,14 @@ MQTT_PUB_FMT = (
 def expand_power(power, pd):
     """power.mqtt_topic + lab.power_defaults → pdu_generic 命令（全内联，无脚本文件）。
 
-    hard_reset = 关(key:0) → sleep 5 → 开(key:1)，与旧 mqtt-reset*.sh 等价但不落文件。
+    hard_reset = 关(key:0) → sleep 5 → 开(key:1)。
+
+    ⚠ LAVA 执行电源命令时逐条 shlex 拆分、**不经 shell**（见 slave 的
+    lava_dispatcher/power.py::PDUReboot：`for cmd in command` 直接调 argv）。
+    所以 `;`/`sleep` 不能裸拼进一条命令（会被当成 mosquitto_pub 的参数，报
+    "Unknown option 'sleep'"）——必须整条 compound 包进 `sh -c "…"` 交给 shell。
+    内部 " 转义供 shlex 在 sh 的双引号参数里还原（shlex: \" → "、' 原样）。
+    power_on 是单条命令、shlex 直接可跑，不包。
     """
     def pub(key):
         return MQTT_PUB_FMT.format(
@@ -44,9 +51,11 @@ def expand_power(power, pd):
             topic=power["mqtt_topic"], key=key,
         )
 
+    compound = f"{pub(0)}; sleep 5; {pub(1)}"
+    hard = 'sh -c "%s"' % compound.replace("\\", "\\\\").replace('"', '\\"')
     return {
         "power_on_command": pub(1),
-        "hard_reset_command": f"{pub(0)}; sleep 5; {pub(1)}",
+        "hard_reset_command": hard,
     }
 
 
@@ -58,8 +67,9 @@ def render_dict(dev, power_defaults):
         if not power_defaults:
             sys.exit(f"ERROR: {dev['name']} 用了 power 但 lab.yaml 缺 power_defaults")
         pdu = expand_power(dev["power"], power_defaults)
-        hard = pdu["hard_reset_command"].replace('"', '\\"')
-        on = pdu["power_on_command"].replace('"', '\\"')
+        # 嵌入 jinja 双引号字符串：先转义 \ 再转义 "（hard_reset 含 sh -c 的 \" 转义，必须先处理 \）
+        hard = pdu["hard_reset_command"].replace("\\", "\\\\").replace('"', '\\"')
+        on = pdu["power_on_command"].replace("\\", "\\\\").replace('"', '\\"')
         text += (
             "\n"
             '{%% set hard_reset_command = "%s" %%}\n' % hard

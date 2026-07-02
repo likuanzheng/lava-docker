@@ -7,7 +7,9 @@ name: xz-a100-001-train
 device_type: xz-a100
 slave: lab-slave-0
 tags: [xz-a100, xz-a100-train, xz-a100-001-train]
-connection_command: telnet 192.168.32.232 3333
+# socat（非 telnet：telnet 回显/协商会打乱 auto_login → Login incorrect）+ while 重连循环
+#   （pdu-reboot 断电重启后 ser2net 端口一时不可达，裸 socat 会立即退出 → Device open failure）。见 lava-health-check。
+connection_command: 'sh -c "while true; do socat -,raw,echo=0,escape=0x1d TCP:192.168.32.232:3333; sleep 1; done"'
 power:
   mqtt_topic: 8cce4e51e192
 

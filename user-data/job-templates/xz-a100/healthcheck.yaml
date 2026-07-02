@@ -5,11 +5,14 @@
 #   不 TFTP、不引导 RAM 系统，因此完全【设备无关】：一份文件覆盖任意数量 A100。
 #
 # 检查项：复位(LAVA 起 job 即跑设备 dict 内联的 hard_reset)→串口/启动到控制台(等登录符)
-#         →登录(ywyh)→内核保活(uname -a)→存储(ls /dev/nvme0n1)。
+#         →auto_login(ywyh/ywyh@204)登录→内核保活(uname -a)→存储(ls /dev/nvme0n1)。
 #
-# ⚠ 提示符是【占位】，按 A100 本地系统实际改（标 CONFIRM 处）：
-#   - 登录符：上电自启后停的提示符（占位 'login:'）
-#   - shell 符：登录后的提示符（占位 'ywyh@'）
+# ⚠ 登录交给 boot 的 auto_login（LAVA 标准机制）——别在 interactive 里手写等 'login:'：
+#   boot 的 auto-login-action 会先消费掉登录符，interactive 再等就死等超时（orin-kit 踩过，见 [[lava-health-check]]）。
+# ⚠ 设备连接必须用 socat（非 telnet）：telnet 的回显/协商会打乱 auto_login → Login incorrect（orin-kit 实测）。
+#   见 devices/xz-a100-001-*.yaml 的 connection_command。
+# ⚠ 提示符仍是【占位】，待 A100 真机确认（orin-kit 已真机验证、A100 尚未）：
+#   login_prompt 'login:'、password_prompt 'Password:'、shell 符 'ywyh@'（应为 'ywyh@<hostname>'）。
 device_type: xz-a100
 job_name: xz-a100 health check
 timeouts:
@@ -23,8 +26,13 @@ visibility: public
 actions:
 - boot:
     method: minimal
+    auto_login:
+      login_prompt: 'login:'          # CONFIRM 占位：上电自启后的登录提示符
+      username: ywyh
+      password_prompt: 'Password:'    # CONFIRM 占位：密码提示符
+      password: ywyh@204
     prompts:
-      - 'login:'         # CONFIRM 占位：上电自启后的登录提示符
+      - 'ywyh@'                        # CONFIRM 占位：登录后 shell 符（宜改 'ywyh@<hostname>'）
     timeout:
       minutes: 5
 
@@ -32,22 +40,8 @@ actions:
     timeout:
       minutes: 3
     interactive:
-    - name: login
-      prompts: ['login:', 'ywyh@']   # CONFIRM 占位：登录符 / 登录后 shell 符
-      script:
-      - command: null
-        name: wait-login-prompt
-      - command: "ywyh"              # 默认用户名
-        name: login-user
-        wait_for_prompt: false
-      - command: "ywyh@204"          # 默认密码（与 lab.yaml 一致，明文）
-        name: login-pass
-        wait_for_prompt: false
-      - command: null
-        name: wait-shell
-
     - name: health-asserts
-      prompts: ['ywyh@']   # CONFIRM 占位：登录后的 shell 提示符
+      prompts: ['ywyh@']              # CONFIRM 占位：同上 shell 符
       script:
       - command: "uname -a"
         name: kernel-alive

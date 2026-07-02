@@ -1,0 +1,59 @@
+# device-type 级健康检查：LAVA 按频率自动在每台 orin-kit 上跑，过=Health Good、挂=Bad 进维护。
+# 注入位置：master:/etc/lava-server/dispatcher-config/health-checks/orin-kit.yaml（由 scripts/reload-health-checks.sh）。
+#
+# 启动方式：只复位电源、等板子从本地 eMMC(mmcblk0p1) UEFI 自启到 Ubuntu → 登录 → 跑命令。
+#   Jetson 无 U-Boot、不 TFTP，因此完全【设备无关】：一份文件覆盖任意数量 orin-kit。
+#
+# 检查项：复位(LAVA 起 job 即跑设备 dict 内联的 hard_reset)→启动到 Ubuntu
+#         →auto_login(ywyh/ywyh@204)登录→内核保活(uname -a)→存储(ls /dev/mmcblk0)。
+#
+# ⚠ 登录交给 boot 的 auto_login（LAVA 标准机制）——别在 interactive 里手写等 'login:'：
+#   boot 的 auto-login-action 会先消费掉登录符，interactive 再等就死等超时（踩过，见 [[lava-health-check]]）。
+#   auto_login 流程：等 login_prompt→发 username→等 password_prompt→发 password→停在 prompts(shell 符)。
+device_type: orin-kit
+job_name: orin-kit health check
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 7
+priority: high
+visibility: public
+
+actions:
+- boot:
+    method: minimal
+    auto_login:
+      login_prompt: 'login:'          # "jetson login:"，子串匹配
+      username: ywyh
+      password_prompt: 'Password:'    # Ubuntu getty 密码提示
+      password: ywyh@204
+    prompts:
+      - 'ywyh@jetson'                 # 登录后的 shell 提示符（ywyh@jetson:~$，去掉 :~$ 避开正则 $）
+    timeout:
+      minutes: 6
+
+- test:
+    timeout:
+      minutes: 3
+    interactive:
+    - name: health-asserts
+      prompts: ['ywyh@jetson']        # 登录后的 shell 提示符
+      script:
+      - command: "uname -a"
+        name: kernel-alive
+        successes:
+        - message: "Linux"
+        failures:
+        - message: "command not found"
+          exception: JobError
+          error: "内核保活检查失败"
+
+      - command: "ls /dev/mmcblk0"
+        name: storage-present
+        successes:
+        - message: "/dev/mmcblk0"
+        failures:
+        - message: "No such file"
+          exception: JobError
+          error: "存储 /dev/mmcblk0 不存在"

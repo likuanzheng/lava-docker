@@ -36,6 +36,9 @@ slaves:
     dispatcher_ip: 192.168.32.9
     extra_actions:
       - "apt-get install -y mosquitto-clients"
+      # socat（串口无回显连接，健康检查 auto_login 必需）。tuna 镜像对该包偶发 403，
+      # apt 装不上时回退到 aliyun .deb（版本按 bookworm 固定）。
+      - "apt-get install -y socat || (cd /tmp && wget -q http://mirrors.aliyun.com/debian/pool/main/s/socat/socat_1.7.4.4-2_amd64.deb && dpkg -i socat_1.7.4.4-2_amd64.deb && rm -f socat_1.7.4.4-2_amd64.deb)"
     custom_volumes:
       # 仅留 job 运行时持续要读的：tftp(供启动/备份落点)。复位/开机命令已内联进设备 dict，无需挂 power。
       # 设备字典(devices/tags/aliases/deviceinfo)不挂载——reload 时由 docker cp 临时注入，
